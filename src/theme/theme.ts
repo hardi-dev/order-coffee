@@ -16,7 +16,8 @@ export const theme = extendTheme({
     global: {
       'html, body': {
         color: 'brand.500',
-        height: '100%'
+        height: '100%',
+        overflow: 'hidden'
       },
       '#__next': {
         height: '100%'

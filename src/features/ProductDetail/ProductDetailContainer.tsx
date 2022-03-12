@@ -9,14 +9,35 @@ import {
   ListItem,
   Button,
   Input,
+  ImageProps,
+  FlexProps,
+  TextProps,
+  HeadingProps,
+  ListItemProps,
+  ListProps
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { ProductData } from "@/utils/constant";
 import { formatPrice } from "@/utils/helper";
+import { motion, HTMLMotionProps, Variants } from "framer-motion";
 
 type ProductType = typeof ProductData[0];
 type ProductSizeType = ProductType["sizes"][0];
+type Merge<P, T> = Omit<P, keyof T> & T;
+type MotionImageProps = Merge<ImageProps, HTMLMotionProps<"img">>;
+type MotionFlexProps = Merge<FlexProps, HTMLMotionProps<"div">>;
+type MotionTextProps = Merge<TextProps, HTMLMotionProps<"p">>;
+type MotionHeadingProps = Merge<HeadingProps, HTMLMotionProps<"h1">>;
+type MotionListItemProps = Merge<ListItemProps, HTMLMotionProps<"li">>;
+type MotionUnorderedListProps = Merge<ListProps, HTMLMotionProps<"ul">>;
+
+const MotionImage: React.FC<MotionImageProps> = motion(Image);
+const MotionFlex: React.FC<MotionFlexProps> = motion(Flex);
+const MotionText: React.FC<MotionTextProps> = motion(Flex);
+const MotionHeading: React.FC<MotionHeadingProps> = motion(Heading);
+const MotionListItem: React.FC<MotionListItemProps> = motion(ListItem);
+const MotionUnorderedList: React.FC<MotionUnorderedListProps> = motion(UnorderedList);
 
 const getProductBySlug = (slug: string) =>
   ProductData.find((product) => product.slug === slug);
@@ -33,12 +54,45 @@ interface CounterProps {
   onMin: () => void;
 }
 
+const easing = [0.16, 1, 0.3, 1];
+
+const FadeUpVariants: Variants = {
+  hidden: { x: 30, opacity: 0 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.6,
+      ease: easing,
+    },
+  },
+};
+
+const ScaleOutVariants: Variants = {
+  initial: {
+    opacity: 0,
+    scale: 0.8,
+  },
+  animate: {
+    opacity: 1,
+    scale: 1,
+  },
+};
+
+const StaggerVariants: Variants = {
+  show: {
+    transition: {
+      staggerChildren: 0.07,
+    },
+  },
+};
+
 const SizeSelector = ({ sizes, selected, onSelect }: SizeSelectorProps) => (
-  <Flex w="full" direction="column" mt="6">
+  <MotionFlex w="full" direction="column" mt="6" variants={FadeUpVariants}>
     <Text fontWeight="semibold">Choose Size : </Text>
-    <UnorderedList w="full" ml="0px" mt="4">
+    <MotionUnorderedList w="full" ml="0px" mt="4" variants={StaggerVariants} >
       {sizes.map(({ name, price }, idx) => (
-        <ListItem
+        <MotionListItem variants={FadeUpVariants}
           key={name}
           display="flex"
           px="6"
@@ -63,12 +117,14 @@ const SizeSelector = ({ sizes, selected, onSelect }: SizeSelectorProps) => (
           />
           <Flex flex={1}>
             <Text>{name}</Text>
-            <Text ml="auto" fontWeight="semibold">{formatPrice(price)}</Text>
+            <Text ml="auto" fontWeight="semibold">
+              {formatPrice(price)}
+            </Text>
           </Flex>
-        </ListItem>
+        </MotionListItem>
       ))}
-    </UnorderedList>
-  </Flex>
+    </MotionUnorderedList>
+  </MotionFlex>
 );
 
 const Counter = ({ count, onMin, onPlus }: CounterProps) => {
@@ -82,7 +138,8 @@ const Counter = ({ count, onMin, onPlus }: CounterProps) => {
         size="sm"
         outline="none"
         border="0"
-        w="32px"
+        w="80px"
+        textAlign="center"
         mx="1"
       />
       <Button variant="outline" size="sm" onClick={onPlus}>
@@ -121,33 +178,71 @@ export const ProductDetailContainer = () => {
   const { thumbnail, title, description, sizes } = product;
 
   return (
-    <Flex w="full" h="full" bg="white" alignItems="center" justify="flex-start">
-      <Flex h="full" width="50%" bg="brand.100" justify="center" align="center">
-        <Image src={`/${thumbnail}`} alt={title} w={485} h={485} />
+    <MotionFlex
+      w="full"
+      h="full"
+      alignItems="center"
+      justify="flex-start"
+      bg="brand.100"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1, transition: { duration: .2 } }}
+    >
+      <Flex h="full" width="50%" justify="center" align="center">
+        <MotionImage
+          src={`/${thumbnail}`}
+          alt={title}
+          w={485}
+          h={485}
+          initial={{ x: 60, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+        />
       </Flex>
-      <Flex h="full" width="50%" justify="center" pt={100}>
-        <Flex align="flex-start" w={480} direction="column">
+      <MotionFlex
+        h="full"
+        width="50%"
+        justify="center"
+        pt={100}
+        variants={StaggerVariants}
+        initial="hidden"
+        animate="show"
+        bg="white"
+      >
+        <MotionFlex align="flex-start" w={480} direction="column">
           <Link href="/" passHref>
-            <Text as="a" opacity={0.5}>
+            <MotionText as="a" opacity={0.5} variants={FadeUpVariants}>
               Back to Product List
-            </Text>
+            </MotionText>
           </Link>
-          <Heading as="h1" fontSize={48} mt="6">
+          <MotionHeading as="h1" fontSize={48} mt="6" variants={FadeUpVariants}>
             {title}
-          </Heading>
-          <Text mt="2">{description}</Text>
-          <SizeSelector sizes={sizes} selected={selectedSize} onSelect={(selected) => setSelectedSize(selected)}/>
-          <Flex w="full" align="center" mt="9">
+          </MotionHeading>
+          <MotionText mt="2" variants={FadeUpVariants}>
+            {description}
+          </MotionText>
+          <SizeSelector
+            sizes={sizes}
+            selected={selectedSize}
+            onSelect={(selected) => setSelectedSize(selected)}
+          />
+          <MotionFlex w="full" align="center" mt="9" variants={FadeUpVariants}>
             <Counter
               onMin={() => handleOnClickCounter("minus")}
               onPlus={() => handleOnClickCounter("plus")}
               count={itemCount}
             />
-            <Text ml="auto" fontSize="24px" fontWeight="bold">
+            <MotionText
+              ml="auto"
+              fontSize="24px"
+              fontWeight="bold"
+              variants={ScaleOutVariants}
+              initial="initial"
+              animate="animate"
+              key={itemCount}
+            >
               {formatPrice(selectedSize.price * itemCount)}
-            </Text>
-          </Flex>
-          <Flex w="full" mt="6">
+            </MotionText>
+          </MotionFlex>
+          <MotionFlex w="full" mt="6" variants={FadeUpVariants}>
             <Button
               size="lg"
               flex={1}
@@ -171,9 +266,9 @@ export const ProductDetailContainer = () => {
                 />
               </svg>
             </Button>
-          </Flex>
-        </Flex>
-      </Flex>
-    </Flex>
+          </MotionFlex>
+        </MotionFlex>
+      </MotionFlex>
+    </MotionFlex>
   );
 };
